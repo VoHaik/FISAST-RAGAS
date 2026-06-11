@@ -314,7 +314,7 @@ RAGAS_EMBEDDINGS_MODEL=nomic-embed-text
 RAGAS_TIMEOUT=600
 RAGAS_NUM_PREDICT=2048
 RAGAS_TEMPERATURE=0.0
-RAGAS_LLM_FORMAT=json
+RAGAS_LLM_FORMAT=json 
 ```
 
 Run:
@@ -395,7 +395,7 @@ You can choose models:
 | `--embeddings-base-url` | `.env` or LLM URL | Embedding endpoint URL | Set when embeddings use a different endpoint |
 | `--generator-model` | `gpt-4o` | LLM used to generate dataset | Use stronger model for better quality |
 | `--embeddings-model` | `text-embedding-3-small` | Embeddings used by RAGAS | Change to match model/provider strategy |
-| `--temperature` | `0.2` | Generation randomness | Lower for more deterministic output |
+ | `--temperature` | `0.2` | Generation randomness | Lower for more deterministic output |
 | `--timeout` | `600` | Request timeout in seconds | Increase for slower local models |
 | `--num-predict` | `512`, `2048` for Ollama from `.env` defaults | Ollama generation token budget | Increase for longer generated JSON outputs |
 | `--llm-format` | `json` for Ollama | Ollama structured output mode | Keep `json` to reduce RAGAS parser failures |
