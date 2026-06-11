@@ -4,19 +4,107 @@
 
 This is an offline CLI pipeline. It does not start a web server.
 
-Input:
+It reads source documents, splits them into text chunks, asks a configured LLM provider to generate RAGAS test rows, and exports a dataset.
+
+Supported input files:
 
 ```text
-data/pdfs/*.pdf
-data/pdfs/*.md
-data/pdfs/*.markdown
+*.pdf
+*.md
+*.markdown
 ```
 
-Output:
+Typical input folders:
+
+```text
+docs/KB/BachDang/ # included Markdown/PDF sample folder
+data/pdfs/        # your own local PDFs or Markdown files
+```
+
+Typical output:
 
 ```text
 data/eval/rag_eval_dataset.jsonl
 ```
+
+Use Markdown when a PDF is scanned or image-based. The pipeline can only use text that PyMuPDF can extract from a PDF.
+
+`--input-dir` reads only files directly inside the selected folder. It does not recursively scan subfolders.
+
+## Quick Start
+
+From the project root, install dependencies and check the CLI:
+
+```powershell
+python -m pip install -r requirements-eval.txt
+python -m src.evaluation_dataset.cli --help
+```
+
+Configure a model provider before generation. For OpenAI, set:
+
+```powershell
+$env:OPENAI_API_KEY="your_api_key_here"
+```
+
+Or use an Ollama/self-hosted `.env` as shown in the provider examples below.
+
+Then generate a 5-row sample:
+
+```powershell
+python -m src.evaluation_dataset.cli generate `
+  --input-dir docs/KB/BachDang `
+  --output-path data/eval/rag_eval_dataset.sample.jsonl `
+  --output-format jsonl `
+  --testset-size 5
+```
+
+Expected output:
+
+```text
+Generated 5 rows at data/eval/rag_eval_dataset.sample.jsonl
+```
+
+If this works, increase `--testset-size` for the full run.
+
+## Change The Main Parameters
+
+Most users only need to change these flags:
+
+| What you want to change | CLI flag | Example |
+| --- | --- | --- |
+| Input folder | `--input-dir` | `--input-dir docs/KB/BachDang` |
+| Output file | `--output-path` | `--output-path data/eval/bach_dang.jsonl` |
+| Output format | `--output-format` | `--output-format csv` |
+| Number of generated rows | `--testset-size` | `--testset-size 20` |
+| Text chunk size | `--chunk-size` | `--chunk-size 1500` |
+| Repeated text between chunks | `--chunk-overlap` | `--chunk-overlap 250` |
+| Model provider | `--provider` | `--provider ollama` |
+| Generator model | `--generator-model` | `--generator-model gpt-4o` |
+| Embedding model | `--embeddings-model` | `--embeddings-model text-embedding-3-small` |
+
+`--chunk-size` is the main "text size" control. It is measured in characters, not words or tokens.
+
+- Use a smaller value such as `700` when chunks are too broad or questions become vague.
+- Use the default `1000` for general use.
+- Use a larger value such as `1500` or `2000` when answers need more surrounding context.
+- Keep `--chunk-overlap` smaller than `--chunk-size`. A common overlap is 10-20% of the chunk size.
+
+Example with a custom input folder and larger text chunks:
+
+```powershell
+python -m src.evaluation_dataset.cli generate `
+  --input-dir docs/KB/BachDang `
+  --output-path data/eval/bach_dang_large_chunks.jsonl `
+  --testset-size 20 `
+  --chunk-size 1500 `
+  --chunk-overlap 250
+```
+
+Configuration priority is:
+
+1. CLI options in the command
+2. `.env` values
+3. source defaults in `src/evaluation_dataset/config.py`
 
 ## 1. Install Python
 
@@ -41,8 +129,10 @@ python -m pip install -r requirements-eval.txt
 If `python` is not recognized in this shell, use the full Python path once to create a local virtual environment:
 
 ```powershell
-& 'C:\Users\KHAI\AppData\Local\Programs\Python\Python312\python.exe' -m venv .venv
+& 'C:\Path\To\Python312\python.exe' -m venv .venv
 ```
+
+Replace `C:\Path\To\Python312\python.exe` with the Python executable installed on your machine. If you do not know the path, reinstall Python 3.10+ and enable "Add Python to PATH".
 
 Then install dependencies through the virtual environment:
 
@@ -70,18 +160,27 @@ Or create a `.env` file in the project root:
 OPENAI_API_KEY=your_api_key_here
 ```
 
-## 4. Add PDF Files
+## 4. Add Input Files
 
-Create the input folder:
+Use a folder that directly contains `.pdf`, `.md`, or `.markdown` files, such as:
+
+```text
+docs/KB/BachDang/
+docs/KB/ChiLang/
+```
+
+Or create your own input folder:
 
 ```powershell
 New-Item -ItemType Directory -Path data/pdfs -Force
 ```
 
-Place your PDF files in:
+Place source files in that folder:
 
 ```text
 data/pdfs/
+data/pdfs/my_source.pdf
+data/pdfs/my_ocr_text.md
 ```
 
 Markdown is also supported. If you use a chatbot or OCR tool to convert scanned PDFs into Markdown, place the `.md` files in the same input folder:
@@ -91,6 +190,15 @@ data/pdfs/I_tran_bach_dang.md
 ```
 
 Use Markdown when the original PDF is scanned/image-based or only exposes header/footer text.
+
+The command uses whichever folder you pass to `--input-dir`. For example:
+
+```powershell
+--input-dir docs/KB/BachDang
+--input-dir data/pdfs
+```
+
+If your files are split across many subfolders, run the command once per folder or copy the files into one input folder first.
 
 ## 5. Run A Small Sample First
 
