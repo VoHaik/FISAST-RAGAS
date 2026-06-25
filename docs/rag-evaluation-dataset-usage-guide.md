@@ -434,6 +434,7 @@ You can choose models:
 | `--adapt-prompts` | `false` | Enable automatic RAGAS prompt adaptation to the target language | Set to `true` to adapt prompts (requires strong LLM) |
 | `--chunk-size` | `1000` | Max characters per chunk | Increase if answers need more context |
 | `--chunk-overlap` | `150` | Shared characters between chunks | Increase if context is split awkwardly |
+| `--chunking-method` | `semantic` | Chunking algorithm (`semantic` or `recursive`) | Change to `recursive` for legacy character-count splits |
 | `--testset-size` | `100` | Number of generated rows | Start with `5` or `20`, then scale |
 | `--single-hop-specific-ratio` | `0.5` | Direct questions from one context | Increase for factual retrieval tests |
 | `--multi-hop-specific-ratio` | `0.25` | Questions requiring multiple contexts | Increase for retrieval reasoning tests |

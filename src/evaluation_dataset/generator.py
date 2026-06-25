@@ -6,11 +6,16 @@ from src.evaluation_dataset.config import EvaluationDatasetConfig
 from src.evaluation_dataset.model_provider import build_ragas_models
 
 
-def generate_ragas_testset(documents: list[Any], config: EvaluationDatasetConfig) -> pd.DataFrame:
+def generate_ragas_testset(
+    documents: list[Any],
+    config: EvaluationDatasetConfig,
+    models: Any = None,
+) -> pd.DataFrame:
     config.validate()
 
     imports = _load_ragas_testset_imports()
-    models = build_ragas_models(config)
+    if models is None:
+        models = build_ragas_models(config)
     run_config = imports["RunConfig"](
         timeout=config.ragas_run_timeout,
         max_retries=config.ragas_max_retries,

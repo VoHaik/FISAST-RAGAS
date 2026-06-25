@@ -37,3 +37,53 @@ def test_chunk_source_documents_preserves_markdown_metadata():
     assert chunks[0].metadata["source_file"] == "history.md"
     assert chunks[0].metadata["source_type"] == "markdown"
     assert chunks[0].metadata["chunk_id"] == "history.md:document:c0"
+
+
+class MockEmbeddings:
+    model: str = "mock-model"
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return [[0.1, 0.2, 0.3] for _ in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        return [0.1, 0.2, 0.3]
+
+
+def test_chunk_pdf_pages_semantic_chunking_with_mock_embeddings():
+    pages = [
+        PdfPage(
+            source_file="history.pdf",
+            page_number=1,
+            text="First sentence here. Second sentence starts now. Third sentence is final.",
+        )
+    ]
+    mock_emb = MockEmbeddings()
+    chunks = chunk_pdf_pages(
+        pages,
+        chunk_size=1000,
+        chunk_overlap=150,
+        embeddings=mock_emb,
+        chunking_method="semantic"
+    )
+    assert len(chunks) >= 1
+    assert "First sentence" in chunks[0].page_content
+
+
+def test_chunk_pdf_pages_semantic_fallback_when_no_embeddings():
+    pages = [
+        PdfPage(
+            source_file="history.pdf",
+            page_number=1,
+            text="Tran Hung Dao led Vietnamese forces.",
+        )
+    ]
+    # Passing embeddings=None with semantic method should gracefully fall back to recursive
+    chunks = chunk_pdf_pages(
+        pages,
+        chunk_size=40,
+        chunk_overlap=10,
+        embeddings=None,
+        chunking_method="semantic"
+    )
+    assert len(chunks) >= 1
+    assert chunks[0].metadata["source_file"] == "history.pdf"

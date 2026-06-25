@@ -104,3 +104,22 @@ def test_validate_rejects_unknown_provider():
 
     with pytest.raises(ValueError, match="provider"):
         config.validate()
+
+
+def test_config_from_env_reads_chunking_method(monkeypatch):
+    monkeypatch.setenv("RAGAS_CHUNKING_METHOD", "recursive")
+    config = EvaluationDatasetConfig.from_env(
+        input_pdf_dir=Path("docs/KB"),
+        output_path=Path("data/eval/out.jsonl"),
+    )
+    assert config.chunking_method == "recursive"
+
+
+def test_validate_rejects_invalid_chunking_method():
+    config = EvaluationDatasetConfig(
+        input_pdf_dir=Path("docs/KB"),
+        output_path=Path("data/eval/out.jsonl"),
+        chunking_method="invalid",
+    )
+    with pytest.raises(ValueError, match="chunking_method"):
+        config.validate()

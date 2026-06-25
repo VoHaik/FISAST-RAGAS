@@ -50,6 +50,7 @@ def generate(
     ragas_max_workers: int | None = typer.Option(None),
     ragas_run_timeout: int | None = typer.Option(None),
     ragas_max_retries: int | None = typer.Option(None),
+    chunking_method: str | None = typer.Option(None),
 ) -> None:
     load_dotenv()
     resolved_input_dir = _resolve_input_dir(input_dir, input_pdf_dir)
@@ -77,6 +78,7 @@ def generate(
         ragas_max_workers=ragas_max_workers,
         ragas_run_timeout=ragas_run_timeout,
         ragas_max_retries=ragas_max_retries,
+        chunking_method=chunking_method,
     )
     config.validate()
 
@@ -86,12 +88,19 @@ def generate(
         typer.secho(str(error), fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1) from error
 
+    # Build models first to pass embeddings model for semantic chunking
+    from src.evaluation_dataset.model_provider import build_ragas_models
+    models = build_ragas_models(config)
+
+    raw_embeddings = getattr(models.embeddings, "embeddings", models.embeddings)
     documents = chunk_pdf_pages(
         source_documents,
         chunk_size=config.chunk_size,
         chunk_overlap=config.chunk_overlap,
+        embeddings=raw_embeddings,
+        chunking_method=config.chunking_method,
     )
-    frame = generate_ragas_testset(documents, config)
+    frame = generate_ragas_testset(documents, config, models=models)
     export_dataset(frame, config.output_path, config.output_format)
 
     typer.echo(f"Generated {len(frame)} rows at {config.output_path}")

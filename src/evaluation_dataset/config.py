@@ -31,6 +31,7 @@ class EvaluationDatasetConfig:
     ragas_max_workers: int = 16
     ragas_run_timeout: int = 600
     ragas_max_retries: int = 2
+    chunking_method: str = "semantic"
 
     @classmethod
     def from_env(
@@ -58,6 +59,7 @@ class EvaluationDatasetConfig:
         ragas_max_workers: int | None = None,
         ragas_run_timeout: int | None = None,
         ragas_max_retries: int | None = None,
+        chunking_method: str | None = None,
     ) -> "EvaluationDatasetConfig":
         selected_provider = provider or os.getenv("RAGAS_PROVIDER", "openai")
         return cls(
@@ -100,6 +102,7 @@ class EvaluationDatasetConfig:
             ragas_max_retries=ragas_max_retries
             if ragas_max_retries is not None
             else int(os.getenv("RAGAS_MAX_RETRIES", "2")),
+            chunking_method=chunking_method or os.getenv("RAGAS_CHUNKING_METHOD", "semantic"),
         )
 
     def validate(self) -> None:
@@ -133,6 +136,9 @@ class EvaluationDatasetConfig:
             raise ValueError("ragas_run_timeout must be greater than 0")
         if self.ragas_max_retries < 0:
             raise ValueError("ragas_max_retries must be 0 or greater")
+        if self.chunking_method not in {"recursive", "semantic"}:
+            raise ValueError("chunking_method must be either 'recursive' or 'semantic'")
+
 
         total = (
             self.single_hop_specific_ratio
