@@ -22,6 +22,8 @@ def normalize_dataset(frame: pd.DataFrame) -> pd.DataFrame:
 
     for column in REQUIRED_COLUMNS:
         normalized[column] = normalized[column].apply(_require_non_empty)
+    
+    normalized = normalized.fillna("None")
     return normalized
 
 

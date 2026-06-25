@@ -1,7 +1,5 @@
 # V - TRẬN CHI LĂNG - XƯƠNG GIANG (NĂM 1427)
 
-> Nguồn PDF: `03_V_tran_chi_lang_OCR_MAX(1).pdf`
-> Ghi chú: OCR tự động từ bản scan; có thể còn một số lỗi dấu/ký tự do chất lượng ảnh gốc.
 
 ## Trang 1
 

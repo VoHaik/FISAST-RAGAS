@@ -1,7 +1,5 @@
 # IX - TRẬN ĐIỆN BIÊN PHỦ TRÊN KHÔNG (NĂM 1972)
 
-> Nguồn PDF: `07_IX_dien_bien_phu_tren_khong_OCR_MAX(1).pdf`
-> Ghi chú: OCR tự động từ bản scan; có thể còn một số lỗi dấu/ký tự do chất lượng ảnh gốc.
 
 ## Trang 1
 

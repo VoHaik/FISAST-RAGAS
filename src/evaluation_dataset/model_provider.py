@@ -15,6 +15,7 @@ class ModelSettings:
     timeout: int
     num_predict: int
     llm_format: str
+    system_prompt: str | None = None
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,10 @@ class RagasModels:
 
 def build_model_settings(config: EvaluationDatasetConfig) -> ModelSettings:
     config.validate()
+    system_prompt = None
+    if config.language and config.language.lower() == "vietnamese":
+        system_prompt = "Always write the question ('query') and answer ('answer') in Vietnamese."
+
     return ModelSettings(
         provider=config.provider,
         llm_model=config.generator_model,
@@ -35,6 +40,7 @@ def build_model_settings(config: EvaluationDatasetConfig) -> ModelSettings:
         timeout=config.timeout,
         num_predict=config.num_predict,
         llm_format=config.llm_format or ("json" if config.provider == "ollama" else ""),
+        system_prompt=system_prompt,
     )
 
 
@@ -85,15 +91,19 @@ def _build_openai_compatible_models(settings: ModelSettings) -> RagasModels:
 
 def _build_ollama_models(settings: ModelSettings) -> RagasModels:
     imports = _load_ollama_imports()
+    ollama_kwargs = {
+        "base_url": settings.llm_base_url,
+        "model": settings.llm_model,
+        "temperature": settings.temperature,
+        "timeout": settings.timeout,
+        "num_predict": settings.num_predict,
+        "format": settings.llm_format,
+    }
+    if settings.system_prompt:
+        ollama_kwargs["system"] = settings.system_prompt
+
     llm = imports["LangchainLLMWrapper"](
-        imports["OllamaLLM"](
-            base_url=settings.llm_base_url,
-            model=settings.llm_model,
-            temperature=settings.temperature,
-            timeout=settings.timeout,
-            num_predict=settings.num_predict,
-            format=settings.llm_format,
-        )
+        imports["OllamaLLM"](**ollama_kwargs)
     )
     embeddings = imports["LangchainEmbeddingsWrapper"](
         imports["OllamaEmbeddings"](

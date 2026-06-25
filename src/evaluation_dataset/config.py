@@ -11,6 +11,8 @@ class EvaluationDatasetConfig:
     input_pdf_dir: Path
     output_path: Path
     output_format: str = "jsonl"
+    language: str = "vietnamese"
+    adapt_prompts: bool = False
     chunk_size: int = 1000
     chunk_overlap: int = 150
     testset_size: int = 100
@@ -26,6 +28,9 @@ class EvaluationDatasetConfig:
     timeout: int = 600
     num_predict: int = 512
     llm_format: str = ""
+    ragas_max_workers: int = 16
+    ragas_run_timeout: int = 600
+    ragas_max_retries: int = 2
 
     @classmethod
     def from_env(
@@ -33,6 +38,8 @@ class EvaluationDatasetConfig:
         input_pdf_dir: Path,
         output_path: Path,
         output_format: str = "jsonl",
+        language: str | None = None,
+        adapt_prompts: bool | None = None,
         chunk_size: int = 1000,
         chunk_overlap: int = 150,
         testset_size: int = 100,
@@ -48,12 +55,17 @@ class EvaluationDatasetConfig:
         timeout: int | None = None,
         num_predict: int | None = None,
         llm_format: str | None = None,
+        ragas_max_workers: int | None = None,
+        ragas_run_timeout: int | None = None,
+        ragas_max_retries: int | None = None,
     ) -> "EvaluationDatasetConfig":
         selected_provider = provider or os.getenv("RAGAS_PROVIDER", "openai")
         return cls(
             input_pdf_dir=input_pdf_dir,
             output_path=output_path,
             output_format=output_format,
+            language=language or os.getenv("RAGAS_LANGUAGE", "vietnamese"),
+            adapt_prompts=adapt_prompts if adapt_prompts is not None else os.getenv("RAGAS_ADAPT_PROMPTS", "false").lower() == "true",
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
             testset_size=testset_size,
@@ -79,6 +91,15 @@ class EvaluationDatasetConfig:
             llm_format=llm_format
             if llm_format is not None
             else os.getenv("RAGAS_LLM_FORMAT", _default_llm_format(selected_provider)),
+            ragas_max_workers=ragas_max_workers
+            if ragas_max_workers is not None
+            else int(os.getenv("RAGAS_MAX_WORKERS", "16")),
+            ragas_run_timeout=ragas_run_timeout
+            if ragas_run_timeout is not None
+            else int(os.getenv("RAGAS_RUN_TIMEOUT", os.getenv("RAGAS_TIMEOUT", "600"))),
+            ragas_max_retries=ragas_max_retries
+            if ragas_max_retries is not None
+            else int(os.getenv("RAGAS_MAX_RETRIES", "2")),
         )
 
     def validate(self) -> None:
@@ -88,6 +109,8 @@ class EvaluationDatasetConfig:
             )
         if self.output_format not in {"jsonl", "csv"}:
             raise ValueError("output_format must be either 'jsonl' or 'csv'")
+        if not self.language:
+            raise ValueError("language must be a non-empty string")
         if self.chunk_size <= 0:
             raise ValueError("chunk_size must be greater than 0")
         if self.chunk_overlap < 0:
@@ -104,6 +127,12 @@ class EvaluationDatasetConfig:
             raise ValueError("num_predict must be greater than 0")
         if self.llm_format not in {"", "json"}:
             raise ValueError("llm_format must be either '' or 'json'")
+        if self.ragas_max_workers <= 0:
+            raise ValueError("ragas_max_workers must be greater than 0")
+        if self.ragas_run_timeout <= 0:
+            raise ValueError("ragas_run_timeout must be greater than 0")
+        if self.ragas_max_retries < 0:
+            raise ValueError("ragas_max_retries must be 0 or greater")
 
         total = (
             self.single_hop_specific_ratio

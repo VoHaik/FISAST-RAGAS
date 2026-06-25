@@ -80,6 +80,21 @@ def test_config_from_env_uses_ollama_json_defaults(monkeypatch):
     assert config.num_predict == 2048
 
 
+def test_config_from_env_reads_ragas_run_config(monkeypatch):
+    monkeypatch.setenv("RAGAS_MAX_WORKERS", "1")
+    monkeypatch.setenv("RAGAS_RUN_TIMEOUT", "900")
+    monkeypatch.setenv("RAGAS_MAX_RETRIES", "3")
+
+    config = EvaluationDatasetConfig.from_env(
+        input_pdf_dir=Path("docs/KB"),
+        output_path=Path("data/eval/out.jsonl"),
+    )
+
+    assert config.ragas_max_workers == 1
+    assert config.ragas_run_timeout == 900
+    assert config.ragas_max_retries == 3
+
+
 def test_validate_rejects_unknown_provider():
     config = EvaluationDatasetConfig(
         input_pdf_dir=Path("docs/KB"),

@@ -352,6 +352,52 @@ OPENAI_API_KEY=not-needed-or-server-token
 
 Some OpenAI-compatible servers require a token. Others accept any dummy value.
 
+#### Fake LLM Playwright Proxy Example
+
+Use this when calling the local Fake LLM Playwright Proxy described in `docs/integration/ragas-and-api-client-guide.md`.
+
+```env
+RAGAS_PROVIDER=openai-compatible
+RAGAS_LLM_BASE_URL=http://localhost:8000/v1
+RAGAS_LLM_MODEL=fake-gpt-5
+RAGAS_EMBEDDINGS_BASE_URL=http://localhost:8000/v1
+RAGAS_EMBEDDINGS_MODEL=fake-embeddings
+OPENAI_API_KEY=not-needed
+RAGAS_TIMEOUT=600
+RAGAS_TEMPERATURE=0.0
+RAGAS_LLM_FORMAT=
+RAGAS_MAX_WORKERS=1
+RAGAS_RUN_TIMEOUT=600
+RAGAS_MAX_RETRIES=2
+```
+
+Keep `RAGAS_MAX_WORKERS=1` for this proxy. The proxy drives one browser/ChatGPT session and effectively handles one generation at a time. Higher RAGAS concurrency can leave many HTTP connections open while they wait behind the active browser request, which looks like the RAGAS source is hanging and the proxy stopped receiving new requests.
+
+Before running RAGAS, verify the proxy is up:
+
+```powershell
+curl.exe http://localhost:8000/health
+```
+
+Expected:
+
+```json
+{"status":"ok"}
+```
+
+Then run a small smoke test:
+
+```powershell
+& '.\.venv\Scripts\python.exe' -m src.evaluation_dataset.cli generate `
+  --input-dir docs/KB/BachDang `
+  --output-path docs/KB/BachDang/rag_eval_dataset.fake-llm.sample.jsonl `
+  --output-format jsonl `
+  --testset-size 1 `
+  --ragas-max-workers 1
+```
+
+`fake-embeddings` is only suitable for pipeline smoke tests. Use real embeddings for quality evaluation.
+
 You can tune chunking:
 
 ```powershell
@@ -384,6 +430,8 @@ You can choose models:
 | `--input-pdf-dir` | optional | Legacy PDF-only input folder option | Prefer `--input-dir` for new usage |
 | `--output-path` | required | Output `.jsonl` or `.csv` path | Change per generated dataset |
 | `--output-format` | `jsonl` | Export format | Use `csv` for spreadsheet review |
+| `--language` | `vietnamese` | Target language for generated test cases | Change to `english` or other languages |
+| `--adapt-prompts` | `false` | Enable automatic RAGAS prompt adaptation to the target language | Set to `true` to adapt prompts (requires strong LLM) |
 | `--chunk-size` | `1000` | Max characters per chunk | Increase if answers need more context |
 | `--chunk-overlap` | `150` | Shared characters between chunks | Increase if context is split awkwardly |
 | `--testset-size` | `100` | Number of generated rows | Start with `5` or `20`, then scale |
@@ -395,10 +443,13 @@ You can choose models:
 | `--embeddings-base-url` | `.env` or LLM URL | Embedding endpoint URL | Set when embeddings use a different endpoint |
 | `--generator-model` | `gpt-4o` | LLM used to generate dataset | Use stronger model for better quality |
 | `--embeddings-model` | `text-embedding-3-small` | Embeddings used by RAGAS | Change to match model/provider strategy |
- | `--temperature` | `0.2` | Generation randomness | Lower for more deterministic output |
+| `--temperature` | `0.2` | Generation randomness | Lower for more deterministic output |
 | `--timeout` | `600` | Request timeout in seconds | Increase for slower local models |
 | `--num-predict` | `512`, `2048` for Ollama from `.env` defaults | Ollama generation token budget | Increase for longer generated JSON outputs |
 | `--llm-format` | `json` for Ollama | Ollama structured output mode | Keep `json` to reduce RAGAS parser failures |
+| `--ragas-max-workers` | `16` (or `1`/`2` via env) | Number of parallel worker threads for RAGAS generation | Set to `1` or `2` for local/remote Ollama or rate-limited endpoints to prevent gateway timeouts |
+| `--ragas-run-timeout` | `600` | Timeout in seconds for a single Ragas generation run | Increase for slower local LLM responses |
+| `--ragas-max-retries` | `2` | Max number of retries for Ragas API requests | Increase if network/rate-limit issues are common |
 
 The three query ratio values must sum to `1.0`.
 
@@ -466,6 +517,8 @@ RAGAS_EMBEDDINGS_MODEL=nomic-embed-text
 RAGAS_NUM_PREDICT=2048
 RAGAS_TEMPERATURE=0.0
 RAGAS_LLM_FORMAT=json
+RAGAS_LANGUAGE=vietnamese
+RAGAS_ADAPT_PROMPTS=false
 ```
 
 The CLI calls `load_dotenv()` before creating the RAGAS generator, so provider settings are available through `os.getenv`.

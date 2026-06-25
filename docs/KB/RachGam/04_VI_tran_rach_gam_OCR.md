@@ -1,7 +1,5 @@
 # VI - TRẬN RẠCH GẦM - XOÀI MÚT (NĂM 1785)
 
-> Nguồn PDF: `04_VI_tran_rach_gam_OCR_MAX(1).pdf`
-> Ghi chú: OCR tự động từ bản scan; có thể còn một số lỗi dấu/ký tự do chất lượng ảnh gốc.
 
 ## Trang 1
 

@@ -48,3 +48,20 @@ def test_export_dataset_writes_jsonl(tmp_path):
     rows = [json.loads(line) for line in output_path.read_text(encoding="utf-8").splitlines()]
     assert rows[0]["question"] == "Who led the resistance?"
     assert rows[0]["ground_truth"] == "Tran Hung Dao."
+
+
+def test_normalize_dataset_replaces_null_with_string_none():
+    frame = pd.DataFrame(
+        [
+            {
+                "question": "Q?",
+                "contexts": ["C"],
+                "ground_truth": "A",
+                "persona_name": None,
+                "query_style": None,
+            }
+        ]
+    )
+    normalized = normalize_dataset(frame)
+    assert normalized.loc[0, "persona_name"] == "None"
+    assert normalized.loc[0, "query_style"] == "None"

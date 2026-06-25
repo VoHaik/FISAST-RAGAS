@@ -1,7 +1,5 @@
 # VIII - CHIẾN DỊCH ĐIỆN BIÊN PHỦ (NĂM 1954)
 
-> Nguồn PDF: `06_VIII_chien_dich_dien_bien_phu_OCR_MAX(1).pdf`
-> Ghi chú: OCR tự động từ bản scan; có thể còn một số lỗi dấu/ký tự do chất lượng ảnh gốc.
 
 ## Trang 1
 

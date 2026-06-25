@@ -30,6 +30,8 @@ def generate(
     input_pdf_dir: Path | None = typer.Option(None, exists=True, file_okay=False),
     output_path: Path = typer.Option(...),
     output_format: str = typer.Option("jsonl"),
+    language: str | None = typer.Option(None),
+    adapt_prompts: bool | None = typer.Option(None),
     chunk_size: int = typer.Option(1000),
     chunk_overlap: int = typer.Option(150),
     testset_size: int = typer.Option(100),
@@ -45,6 +47,9 @@ def generate(
     timeout: int | None = typer.Option(None),
     num_predict: int | None = typer.Option(None),
     llm_format: str | None = typer.Option(None),
+    ragas_max_workers: int | None = typer.Option(None),
+    ragas_run_timeout: int | None = typer.Option(None),
+    ragas_max_retries: int | None = typer.Option(None),
 ) -> None:
     load_dotenv()
     resolved_input_dir = _resolve_input_dir(input_dir, input_pdf_dir)
@@ -52,6 +57,8 @@ def generate(
         input_pdf_dir=resolved_input_dir,
         output_path=output_path,
         output_format=output_format,
+        language=language,
+        adapt_prompts=adapt_prompts,
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
         testset_size=testset_size,
@@ -67,6 +74,9 @@ def generate(
         timeout=timeout,
         num_predict=num_predict,
         llm_format=llm_format,
+        ragas_max_workers=ragas_max_workers,
+        ragas_run_timeout=ragas_run_timeout,
+        ragas_max_retries=ragas_max_retries,
     )
     config.validate()
 

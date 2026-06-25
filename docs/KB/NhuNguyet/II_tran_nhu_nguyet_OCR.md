@@ -1,6 +1,5 @@
 # II - TRẬN NHƯ NGUYỆT (NĂM 1077)
 
-> File Markdown được tạo bằng OCR từ PDF scan `II_tran_nhu_nguyet.pdf`. Nội dung đã được làm sạch header/footer Scribd và chỉnh một số lỗi OCR phổ biến; tuy vậy vẫn có thể còn sai lệch nhẹ ở dấu tiếng Việt hoặc tên riêng.
 
 ## Trang 1
 
