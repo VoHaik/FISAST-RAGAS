@@ -1,3 +1,53 @@
+import sys
+import asyncio
+
+# Set selector event loop policy on Windows to avoid "Event loop is closed" mask
+if sys.platform == 'win32':
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    except Exception:
+        pass
+    
+    # Monkeypatch call_soon to ignore "Event loop is closed" RuntimeError during socket/transport cleanup
+    try:
+        from asyncio import base_events
+        _original_call_soon = base_events.BaseEventLoop.call_soon
+        def _patched_call_soon(self, callback, *args, **kwargs):
+            try:
+                return _original_call_soon(self, callback, *args, **kwargs)
+            except RuntimeError as e:
+                if "Event loop is closed" in str(e):
+                    return None
+                raise
+        base_events.BaseEventLoop.call_soon = _patched_call_soon
+    except Exception:
+        pass
+
+# Monkeypatch Ollama LLM and Embeddings to recreate client on event loop change
+try:
+    from langchain_ollama import OllamaLLM, OllamaEmbeddings
+    
+    _orig_acreate_stream = OllamaLLM._acreate_generate_stream
+    async def _patched_acreate_stream(self, prompt, stop=None, **kwargs):
+        current_loop = asyncio.get_running_loop()
+        if getattr(self, "_last_loop", None) != current_loop:
+            self._set_clients()
+            self._last_loop = current_loop
+        async for part in _orig_acreate_stream(self, prompt, stop, **kwargs):
+            yield part
+    OllamaLLM._acreate_generate_stream = _patched_acreate_stream
+
+    _orig_aembed_docs = OllamaEmbeddings.aembed_documents
+    async def _patched_aembed_docs(self, texts):
+        current_loop = asyncio.get_running_loop()
+        if getattr(self, "_last_loop", None) != current_loop:
+            self._set_clients()
+            self._last_loop = current_loop
+        return await _orig_aembed_docs(self, texts)
+    OllamaEmbeddings.aembed_documents = _patched_aembed_docs
+except Exception:
+    pass
+
 from dataclasses import dataclass
 from typing import Any
 

@@ -27,11 +27,17 @@ def test_generate_ragas_testset_passes_run_config(monkeypatch):
             self.llm = llm
             self.embedding_model = embedding_model
 
-        def generate_with_chunks(self, chunks, **kwargs):
-            captured["documents"] = chunks
-            captured.update(kwargs)
+        def generate(self, testset_size, query_distribution, run_config):
+            captured["documents"] = ["doc"]
+            captured["run_config"] = run_config
             return FakeTestset()
 
+    from ragas.testset.graph import KnowledgeGraph
+    monkeypatch.setattr(
+        generator,
+        "_run_transforms_stage",
+        lambda documents, config, run_config: KnowledgeGraph(nodes=[]),
+    )
     monkeypatch.setattr(
         generator,
         "_load_ragas_testset_imports",
@@ -69,11 +75,6 @@ def test_generate_ragas_testset_passes_run_config(monkeypatch):
 def test_generate_ragas_testset_calls_adapt(monkeypatch):
     adapted_languages = []
 
-    # Mock PromptMixin.adapt_prompts to avoid real LLM calls during test
-    async def mock_adapt_prompts(self, language, llm, adapt_instruction=False):
-        return {}
-    monkeypatch.setattr("ragas.prompt.mixin.PromptMixin.adapt_prompts", mock_adapt_prompts)
-
     class FakeSynthesizerWithAdapt:
         def __init__(self, llm):
             self.llm = llm
@@ -93,9 +94,15 @@ def test_generate_ragas_testset_calls_adapt(monkeypatch):
         def __init__(self, llm, embedding_model):
             pass
 
-        def generate_with_chunks(self, chunks, **kwargs):
+        def generate(self, testset_size, query_distribution, run_config):
             return FakeTestset()
 
+    from ragas.testset.graph import KnowledgeGraph
+    monkeypatch.setattr(
+        generator,
+        "_run_transforms_stage",
+        lambda documents, config, run_config: KnowledgeGraph(nodes=[]),
+    )
     monkeypatch.setattr(
         generator,
         "_load_ragas_testset_imports",
@@ -179,9 +186,15 @@ def test_generate_ragas_testset_injects_language_instruction(monkeypatch):
         def __init__(self, llm, embedding_model):
             pass
 
-        def generate_with_chunks(self, chunks, **kwargs):
+        def generate(self, testset_size, query_distribution, run_config):
             return FakeTestset()
 
+    from ragas.testset.graph import KnowledgeGraph
+    monkeypatch.setattr(
+        generator,
+        "_run_transforms_stage",
+        lambda documents, config, run_config: KnowledgeGraph(nodes=[]),
+    )
     monkeypatch.setattr(
         generator,
         "_load_ragas_testset_imports",

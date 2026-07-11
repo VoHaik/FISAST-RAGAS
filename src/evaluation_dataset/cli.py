@@ -1,4 +1,9 @@
+import sys
+import asyncio
 from pathlib import Path
+
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 import typer
 from dotenv import load_dotenv
