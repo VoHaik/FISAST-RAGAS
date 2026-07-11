@@ -110,8 +110,8 @@ class EvaluationDatasetConfig:
             raise ValueError(
                 f"provider must be one of: {', '.join(sorted(SUPPORTED_PROVIDERS))}"
             )
-        if self.output_format not in {"jsonl", "csv"}:
-            raise ValueError("output_format must be either 'jsonl' or 'csv'")
+        if self.output_format not in {"jsonl", "csv", "py"}:
+            raise ValueError("output_format must be one of: 'jsonl', 'csv', 'py'")
         if not self.language:
             raise ValueError("language must be a non-empty string")
         if self.chunk_size <= 0:
@@ -151,13 +151,13 @@ class EvaluationDatasetConfig:
 
 def _default_llm_model(provider: str) -> str:
     if provider == "ollama":
-        return "qwen2.5:14b"
+        return "hf.co/QuantFactory/gemma2-9b-cpt-sea-lionv3-instruct-GGUF:Q8_0"
     return "gpt-4o"
 
 
 def _default_embeddings_model(provider: str) -> str:
     if provider == "ollama":
-        return "nomic-embed-text"
+        return "bge-m3"
     return "text-embedding-3-small"
 
 

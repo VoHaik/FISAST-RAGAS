@@ -46,8 +46,29 @@ def test_export_dataset_writes_jsonl(tmp_path):
     export_dataset(frame, output_path, "jsonl")
 
     rows = [json.loads(line) for line in output_path.read_text(encoding="utf-8").splitlines()]
-    assert rows[0]["question"] == "Who led the resistance?"
-    assert rows[0]["ground_truth"] == "Tran Hung Dao."
+    assert rows[0]["q"] == "Who led the resistance?"
+    assert rows[0]["a"] == "Tran Hung Dao."
+
+
+def test_export_dataset_writes_py(tmp_path):
+    frame = pd.DataFrame(
+        [
+            {
+                "question": "Who led the resistance?",
+                "contexts": ["Tran Hung Dao led the resistance."],
+                "ground_truth": "Tran Hung Dao.",
+            }
+        ]
+    )
+    output_path = tmp_path / "dataset.py"
+
+    export_dataset(frame, output_path, "py")
+
+    content = output_path.read_text(encoding="utf-8")
+    lines = content.splitlines()
+    assert lines[0] == "mock_qa = ["
+    assert lines[1] == '    {"q": "Who led the resistance?", "contexts": ["Tran Hung Dao led the resistance."], "a": "Tran Hung Dao."},'
+    assert lines[2] == "]"
 
 
 def test_normalize_dataset_replaces_null_with_string_none():

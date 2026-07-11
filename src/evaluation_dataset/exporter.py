@@ -32,14 +32,54 @@ def export_dataset(frame: pd.DataFrame, output_path: Path, output_format: str) -
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if output_format == "jsonl":
-        normalized.to_json(output_path, orient="records", lines=True, force_ascii=False)
+        import json
+        records = normalized.to_dict(orient="records")
+        with open(output_path, "w", encoding="utf-8") as f:
+            for record in records:
+                renamed = {}
+                if "question" in record:
+                    renamed["q"] = record["question"]
+                if "contexts" in record:
+                    renamed["contexts"] = record["contexts"]
+                if "ground_truth" in record:
+                    renamed["a"] = record["ground_truth"]
+                for k, v in record.items():
+                    if k not in ("question", "contexts", "ground_truth"):
+                        renamed[k] = v
+                line = json.dumps(renamed, ensure_ascii=False)
+                f.write(line + "\n")
         return
 
     if output_format == "csv":
         normalized.to_csv(output_path, index=False, encoding="utf-8")
         return
 
-    raise ValueError("output_format must be either 'jsonl' or 'csv'")
+    if output_format == "py":
+        import json
+        records = normalized.to_dict(orient="records")
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("mock_qa = [\n")
+            for record in records:
+                # Build dictionary with the exact requested order of keys
+                renamed = {}
+                if "question" in record:
+                    renamed["q"] = record["question"]
+                if "contexts" in record:
+                    renamed["contexts"] = record["contexts"]
+                if "ground_truth" in record:
+                    renamed["a"] = record["ground_truth"]
+                
+                # Append other metadata keys in original order
+                for k, v in record.items():
+                    if k not in ("question", "contexts", "ground_truth"):
+                        renamed[k] = v
+                        
+                line = json.dumps(renamed, ensure_ascii=False)
+                f.write(f"    {line},\n")
+            f.write("]\n")
+        return
+
+    raise ValueError("output_format must be one of: 'jsonl', 'csv', 'py'")
 
 
 def _available_aliases(frame: pd.DataFrame) -> dict[str, str]:
